@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vega-Lite Example with Filter</title>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+
+  <h2>Population of Select Countries (1960)</h2>
+
+  <!-- map isualisation -->
+  <div id="vis"></div>
+
+  <h2>Population Bar Chart (1960)</h2>
+
+  <!-- bar chart isualisation -->
+  <div id="bar-chart"></div>
+
+  <script type="text/javascript">
+    const countries = [
+      // Asia
+      {"Country Name": "China", "Latitude": 35.8617, "Longitude": 104.1954, "Year1960": 667070000, "Continent": "Asia"},
+      {"Country Name": "India", "Latitude": 20.5937, "Longitude": 78.9629, "Year1960": 449480608, "Continent": "Asia"},
+      {"Country Name": "Japan", "Latitude": 36.2048, "Longitude": 138.2529, "Year1960": 92500572, "Continent": "Asia"},
+      {"Country Name": "Indonesia", "Latitude": -0.7893, "Longitude": 113.9213, "Year1960": 87750700, "Continent": "Asia"},
+      {"Country Name": "Pakistan", "Latitude": 30.3753, "Longitude": 69.3451, "Year1960": 44954829, "Continent": "Asia"},
+      {"Country Name": "Bangladesh", "Latitude": 23.6850, "Longitude": 90.3563, "Year1960": 50196000, "Continent": "Asia"},
+      {"Country Name": "Vietnam", "Latitude": 14.0583, "Longitude": 108.2772, "Year1960": 30999146, "Continent": "Asia"},
+      {"Country Name": "Thailand", "Latitude": 15.8700, "Longitude": 100.9925, "Year1960": 27245847, "Continent": "Asia"},
+      {"Country Name": "South Korea", "Latitude": 35.9078, "Longitude": 127.7669, "Year1960": 25046827, "Continent": "Asia"},
+      // North America
+      {"Country Name": "United States", "Latitude": 37.0902, "Longitude": -95.7129, "Year1960": 180671000, "Continent": "North America"},
+      {"Country Name": "Canada", "Latitude": 56.1304, "Longitude": -106.3468, "Year1960": 17909009, "Continent": "North America"},
+      // South America
+      {"Country Name": "Brazil", "Latitude": -14.2350, "Longitude": -51.9253, "Year1960": 72725000, "Continent": "South America"},
+      {"Country Name": "Argentina", "Latitude": -38.4161, "Longitude": -63.6167, "Year1960": 20619075, "Continent": "South America"}
+    ];
+
+    // map visualisation
+    const spec = {
+      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+      "title": "Population of Select Countries (1960)",
+      "width": 800,
+      "height": 450,
+      "projection": {
+        "type": "equalEarth"
+      },
+      "params": [
+        {
+          "name": "Continent",
+          "value": "Asia", 
+          "bind": {
+            "input": "select",
+            "options": ["Asia", "North America", "South America"],
+            "name": "Select Continent: "
+          }
+        }
+      ],
+      "layer": [
+        {
+          "data": {
+            "url": "https://jessicaaliuxin.github.io/3179-week-9-Homework-/ne_1.json",
+            "format": {
+              "type": "topojson",
+              "feature": "ne_10m_admin_0_countries"
+            }
+          },
+          "transform": [
+            {
+              "filter": "datum.properties.CONTINENT == Continent"
+            }
+          ],
+          "mark": {"type": "geoshape", "fill": "#eee", "stroke": "gray"}
+        },
+        {
+          "data": {
+            "values": countries
+          },
+          "transform": [
+            {
+              "filter": "datum.Continent == Continent"
+            }
+          ],
+          "mark": "circle",
+          "encoding": {
+            "longitude": {
+              "field": "Longitude", 
+              "type": "quantitative",
+              "axis": {"title": "Longitude"}
+            },
+            "latitude": {
+              "field": "Latitude", 
+              "type": "quantitative",
+              "axis": {"title": "Latitude"}
+            },
+            "size": {
+              "field": "Year1960",
+              "type": "quantitative",
+              "scale": {"range": [10, 1000]},
+              "legend": {"title": "Population (1960)"}
+            },
+            "color": {
+              "field": "Year1960",
+              "type": "quantitative",
+              "scale": {
+                "type": "threshold",
+                "domain": [500000, 1000000, 5000000, 10000000, 50000000, 100000000, 500000000],
+                "range": ["#fee5d9", "#fcbba1", "#fc9272", "#fb6a4a", "#ef3b2c", "#cb181d", "#99000d"]
+              },
+              "legend": {"title": "Population (1960)"}
+            },
+            "tooltip": [
+              {"field": "Country Name", "type": "nominal", "title": "Country"},
+              {"field": "Year1960", "type": "quantitative", "title": "Population (1960)"}
+            ]
+          }
+        },
+        {
+          "data": {
+            "values": countries
+          },
+          "transform": [
+            {
+              "filter": "datum.Continent == Continent"
+            }
+          ],
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "dx": 5,
+            "dy": -10,
+            "fontSize": 10,
+            "fontStyle": "italic"
+          },
+          "encoding": {
+            "longitude": {"field": "Longitude", "type": "quantitative"},
+            "latitude": {"field": "Latitude", "type": "quantitative"},
+            "text": {"field": "Country Name"}
+          }
+        }
+      ]
+    };
+
+    // Rendered map
+    vegaEmbed('#vis', spec).then(function() {
+      // Dynamically update bar chart
+      function updateBarChart(continent) {
+        const barSpec = {
+          "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+          "description": "Bar chart showing the population of selected countries in 1960.",
+          "data": {
+            "values": countries
+          },
+          "transform": [
+            {
+              "filter": `datum.Continent == '${continent}'`
+            }
+          ],
+          "mark": "bar",
+          "encoding": {
+            "x": {"field": "Country Name", "type": "nominal", "axis": {"title": "Country"}},
+            "y": {"field": "Year1960", "type": "quantitative", "axis": {"title": "Population (1960)"}},
+            "color": {
+              "field": "Year1960", 
+              "type": "quantitative", 
+              "scale": {"scheme": "blues"}
+            }
+          }
+        };
+        
+        vegaEmbed('#bar-chart', barSpec);
+      }
+
+      // Initial loading of the bar chart for Asia
+      updateBarChart('Asia');
+
+      // check to the drop-down menu changes and update the bar chart
+      document.querySelector('select').addEventListener('change', function(e) {
+        updateBarChart(e.target.value);
+      });
+    });
+  </script>
+
+</body>
+</html>
